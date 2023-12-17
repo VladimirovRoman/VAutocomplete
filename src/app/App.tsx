@@ -1,9 +1,10 @@
+import { VAutocomplete } from '../entities/VAutocomplete/ui/VAutocomplete';
 import './styles/index.css';
 
 function App() {
     return (
         <>
-            <h1>Hello world</h1>
+            <VAutocomplete />
         </>
     );
 }
