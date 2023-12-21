@@ -12,7 +12,7 @@ export const fetchComments = createAsyncThunk('VAutocomplete/fetchComments', asy
     return data;
 });
 
-export const searchComments = createAsyncThunk('VAutocomplete/SearchComments', async (query) => {
+export const searchComments = createAsyncThunk('VAutocomplete/SearchComments', async (query: string) => {
     try {
         const response = await fetch(`https://jsonplaceholder.typicode.com/comments?name=${query}`);
         const data = await response.json();
