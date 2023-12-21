@@ -38,7 +38,7 @@ export function VAutocomplete() {
         [dispatch]
     );
 
-    const handleInputChange = (event: React.ChangeEvent<{}>, value: string) => {
+    const handleInputChange = (_: React.ChangeEvent<{}>, value: string) => {
         setInputValue(value);
         debouncedSearch(value);
     };
