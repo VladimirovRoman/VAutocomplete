@@ -1,35 +1,63 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from 'react';
+import * as React from 'react';
+import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
+
+import { fetchComments, searchComments } from '../model/services/fetchComments';
 import { useDispatch, useSelector } from 'react-redux';
 import { ThunkDispatch } from '@reduxjs/toolkit';
-import { Autocomplete, CircularProgress, TextField, Card, CardContent, Button } from '@mui/material';
-import { getComments, getLoadingStatus } from '../model/selectors/commentsSelectors';
-import { fetchComments } from '../model/services/fetchComments';
-import { IComment } from '../model/types/comment';
 import { RootState } from '../../../app/store/store';
+import { getComments, getLoadingStatus } from '../model/selectors/commentsSelectors';
+import { IComment } from '../model/types/comment';
+import { Button, CircularProgress } from '@mui/material';
+import { ListboxComponent, StyledPopper } from '../../../app/shared';
 
-import styles from './VAutocomplete.module.css';
-
-export const VAutocomplete = () => {
+export function VAutocomplete() {
     const dispatch = useDispatch<ThunkDispatch<RootState, void, any>>();
-    const [filteredComments, setFilteredComments] = useState<IComment[]>([]);
     const comments = useSelector(getComments) as IComment[];
     const loading = useSelector(getLoadingStatus);
+    const [inputValue, setInputValue] = React.useState<string>('');
 
-    useEffect(() => {
-        setFilteredComments(comments);
-    }, [comments]);
+    function debounce(func: Function, delay: number) {
+        let timeoutId: ReturnType<typeof setTimeout>;
+
+        return function debounced(...args: any[]) {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+
+            timeoutId = setTimeout(() => {
+                func(...args);
+            }, delay);
+        };
+    }
+
+    const debouncedSearch = React.useCallback(
+        debounce((value: string) => {
+            dispatch(searchComments(value));
+        }, 1000),
+        [dispatch]
+    );
+
+    const handleInputChange = (event: React.ChangeEvent<{}>, value: string) => {
+        setInputValue(value);
+        debouncedSearch(value);
+    };
 
     return (
-        <div className={styles.comments_container}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
             <Button onClick={() => dispatch(fetchComments())} variant="outlined">
                 Autocomplete
             </Button>
             <Autocomplete
-                className=""
-                options={filteredComments || []}
+                id="virtualize-demo"
+                sx={{ width: 700 }}
+                disableListWrap
+                PopperComponent={StyledPopper}
+                ListboxComponent={ListboxComponent}
+                options={comments}
+                inputValue={inputValue}
+                onInputChange={handleInputChange}
                 getOptionLabel={(option: IComment) => option.name}
-                loading={loading === 'loading'}
                 renderInput={(params) => (
                     <TextField
                         {...params}
@@ -48,21 +76,11 @@ export const VAutocomplete = () => {
                         }}
                     />
                 )}
-                renderOption={(props, option: IComment, state) => (
-                    <li {...props}>
-                        <Card variant="outlined">
-                            <CardContent
-                                style={{ backgroundColor: state.index % 2 === 0 ? 'white' : 'lightgray' }}
-                            >
-                                <p>name: {option.name} </p>
-                                <p>email : {option.email}</p>
-                                <p>body : {option.body}</p>
-                            </CardContent>
-                        </Card>
-                    </li>
-                )}
-                style={{ width: 700, marginTop: 20 }}
+                renderOption={(props, option, state) => {
+                    return [props, option, state.index] as React.ReactNode;
+                }}
+                renderGroup={(params) => params as any}
             />
         </div>
     );
-};
+}
